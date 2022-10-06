@@ -19,7 +19,7 @@ class OperatingHourEstimator:
             self.df['LocalTime_dt'] = pd.to_datetime(self.df['LocalTime_dt'],
                                                      format='%Y-%m-%d %H:%M:%S')
         except Exception as e:
-            print('Error reading data file for NMI : ', nmi)
+            print('Error reading data file for NMI: ', nmi)
             print(e)
             return None
 
@@ -40,9 +40,9 @@ class OperatingHourEstimator:
         print(f'{est_by_freq.most_common(1)[0][1]} days had same pattern')
 
     def single_day_estimation(self, date_estimate):
-        threshold = 0.35  # Normalized quantity to be used as threshold to determine business start/finish time
+        threshold = 0.35  # threshold to determine business start/finish time
         df = self.df[self.df['AESTTime_dt'].dt.date == date_estimate].copy()
-        # Days where consumption quantity does not vary much will be ignored
+        # Days when consumption quantity did not vary much will be ignored
         if df['Quantity'].max() / df['Quantity'].mean() < 1.5:
             return None
         df['AESTDate'] = df['AESTTime_dt'].dt.date
