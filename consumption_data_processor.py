@@ -9,27 +9,28 @@ class ConsumptionDataProcessor:
     This class is used to process consumption data into the format
     required by OperatingHourEstimator
     '''
+    states = {'NSW', 'VIC', 'QLD', 'WA'}
+    nmi_info_col = {'Nmi', 'State', 'Interval'}
+    expected_cols = {'AESTTime', 'Quantity', 'Unit'}
+    allowed_units = {'KWH', 'MWH'}
+    intervals = {15.0, 30.0}
+    tz_lookup = {
+        'NSW': pytz.timezone('Australia/NSW'),
+        'QLD': pytz.timezone('Australia/Queensland'),
+        'VIC': pytz.timezone('Australia/Victoria'),
+        'WA': pytz.timezone('Australia/West')
+    }
+
     def __init__(self, nmi_info_file, consumption_data_folder,
                  processed_folder):
         print('Consumption data processing started.')
-        self.states = {'NSW', 'VIC', 'QLD', 'WA'}
-        self.nmi_info_col = {'Nmi', 'State', 'Interval'}
-        self.expected_cols = {'AESTTime', 'Quantity', 'Unit'}
-        self.allowed_units = {'KWH', 'MWH'}
-        self.intervals = {15.0, 30.0}
-        self.tz_lookup = {
-            'NSW': pytz.timezone('Australia/NSW'),
-            'QLD': pytz.timezone('Australia/Queensland'),
-            'VIC': pytz.timezone('Australia/Victoria'),
-            'WA': pytz.timezone('Australia/West')
-            }
         self.processed_folder = processed_folder
         self.conumption_data_folder = consumption_data_folder
         try:
             self.nmi_info = pd.read_csv(nmi_info_file)
             col_diff = self.nmi_info_col.difference(set(self.nmi_info.columns.values.tolist()))
             if len(col_diff) > 0:
-                raise ValueError('Class initialzation failed : NMI info is missing columns', col_diff)
+                raise ValueError('Class initialzation failed: NMI info is missing columns', col_diff)
         except ValueError as e:
             raise ValueError(e)
         except FileNotFoundError as e:
@@ -43,7 +44,7 @@ class ConsumptionDataProcessor:
                 state = row.State
                 interval = row.Interval
                 print('\nProcessing NMI: ' + nmi)
-                if state.upper() not in self.states:
+                if state.upper() not in self.states:  #
                     print(' #Not a valid state: ', state, ". NMI skipped")
                     continue
                 if interval not in self.intervals:
@@ -71,7 +72,7 @@ class ConsumptionDataProcessor:
                 if df is None:
                     print(' -Consumption data processing failed')
                     continue
-                df = df.drop(['AESTTime_dt_tz'], axis=1)
+                df = df.drop(['AESTTime_dt_tz', 'LocalTime_dt_tz'], axis=1)
                 self.write_df_to_csv(df, nmi, state)
                 print(' -File created successfully')
             print('\nConsumption data processing completed.\n')
@@ -129,5 +130,5 @@ class ConsumptionDataProcessor:
         df['LocalTime_dt_tz'] = df['AESTTime_dt_tz'].dt.tz_convert(
             self.tz_lookup[state])
         df['LocalTime_dt'] = df['LocalTime_dt_tz'].dt.strftime(
-            '%Y-%m-%d %H:%M:%S')
+            '%Y-%m-%d %H:%M:%S') 
         return df
